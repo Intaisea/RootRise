@@ -1,6 +1,7 @@
 services:
   - type: web
     name: rootrise
+    plan: free
     runtime: node
     buildCommand: npm --prefix backend install
     startCommand: npm --prefix backend start
