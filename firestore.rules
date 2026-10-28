@@ -1,0 +1,33 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+    function owner(userId) { return signedIn() && request.auth.uid == userId; }
+    function optedIn(userId) {
+      return exists(/databases/$(database)/documents/users/$(userId))
+        && get(/databases/$(database)/documents/users/$(userId)).data.allowDataSharing == true;
+    }
+    match /admins/{adminId} {
+      allow get: if owner(adminId);
+      allow list, create, update, delete: if false;
+    }
+    match /users/{userId} {
+      allow get, list: if owner(userId) || (isAdmin() && resource.data.allowDataSharing == true);
+      allow create: if owner(userId) && request.resource.data.allowDataSharing == true;
+      allow update: if owner(userId) && (
+        request.resource.data.allowDataSharing == true ||
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['allowDataSharing','consentUpdatedAt'])
+      );
+      allow delete: if false;
+      match /telemetry/{readingId} {
+        allow get, list: if owner(userId) || (isAdmin() && optedIn(userId));
+        allow create, update: if owner(userId) && optedIn(userId)
+          && request.resource.data.keys().hasOnly(['deviceName','connected','transport','airTemperature','airHumidity','soilMoisture','waterUsedLitres','pumpOn','pumpSeconds','farmLatitude','farmLongitude','recordedAt']);
+        allow delete: if false;
+      }
+    }
+  }
+}
