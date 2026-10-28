@@ -156,7 +156,7 @@ $('cloudSignup')?.addEventListener('click', async () => {
     message(shareEnabled ? 'Account created and linked. Your profile and ESP32 data will sync across devices.' : 'Account created. Enable sharing to sync your profile and ESP32 data.');
   } catch (error) { message(error.message, true); }
 });
-$$('cloudLogin')?.addEventListener('click', async () => {
+$('cloudLogin')?.addEventListener('click', async () => {
   if (!form.reportValidity()) return;
   const previousAccountId = localStorage.getItem('rootrise_active_user');
   const localBeforeLogin = localProfile();
@@ -175,7 +175,8 @@ $$('cloudLogin')?.addEventListener('click', async () => {
     } else if (shareEnabled) await syncProfile();
     message(shareEnabled ? 'Signed in. Your RootRise profile is synced to this cloud account.' : 'Signed in. Enable sharing to sync your profile across devices.');
   } catch (error) { message(error.message, true); }
-});cloudPause')?.addEventListener('click', async () => {
+});
+$('cloudPause')?.addEventListener('click', async () => {
   if (!user) return;
   try {
     if (shareEnabled) {

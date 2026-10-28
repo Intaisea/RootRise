@@ -128,7 +128,10 @@ app.post('/api/auth/register', authLimiter, async (req, res, next) => {
     const email = validEmail(req.body.email), password = String(req.body.password || ''), name = cleanText(req.body.name, 100), farm = cleanText(req.body.farm, 100);
     const ageInput = req.body.age == null || String(req.body.age).trim() === '' ? null : Number(req.body.age);
     if (ageInput !== null && (!Number.isInteger(ageInput) || ageInput < 18 || ageInput > 120)) return res.status(400).json({ error: 'Age must be between 18 and 120, or left blank.' });
-    if (!email || email === String(process.env.ADMIN_EMAIL || '').trim().toLowerCase() || password.length < 12 || password.length > 128) return res.status(400).json({ error: 'Use a valid email and a password with at least 12 characters.' });
+    if (!email) return res.status(400).json({ error: 'Enter a valid email address.' });
+    if (email === String(process.env.ADMIN_EMAIL || '').trim().toLowerCase()) return res.status(400).json({ error: 'That email is reserved for the RootRise admin account. Use a different email for a farmer account.' });
+    if (password.length < 12) return res.status(400).json({ error: 'Choose a password with at least 12 characters.' });
+    if (password.length > 128) return res.status(400).json({ error: 'Password must be 128 characters or fewer.' });
     const user = { _id: new ObjectId(), email, passwordHash: await passwordHash(password), name: req.body.shareData === true ? name : '', farm: req.body.shareData === true ? farm : '', age: req.body.shareData === true ? ageInput : null, role: 'farmer', consentAt: req.body.shareData === true ? new Date() : null, createdAt: new Date(), updatedAt: new Date(), deviceOnline: false, latest: null, lastLoginAt: new Date() };
     await users.insertOne(user); await createSession(user, res); res.status(201).json({ user: publicUser(user) });
   } catch (error) { if (error.code === 11000) return res.status(409).json({ error: 'An account with this email already exists.' }); next(error); }
